@@ -8,7 +8,8 @@ const novelSchema = new mongoose.Schema({
   },
   slug: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
@@ -27,6 +28,20 @@ const novelSchema = new mongoose.Schema({
     enum: ['ongoing', 'completed', 'hiatus'],
     default: 'ongoing'
   },
+  
+  // 🔥 APPROVAL SYSTEM
+  approvalStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  approvedAt: Date,
+  rejectionReason: String,
+  
   totalChapters: {
     type: Number,
     default: 0
@@ -61,5 +76,6 @@ const novelSchema = new mongoose.Schema({
 novelSchema.index({ title: 'text', synopsis: 'text', tags: 'text' });
 novelSchema.index({ slug: 1 });
 novelSchema.index({ author: 1 });
+novelSchema.index({ approvalStatus: 1 }); // 🔥 NEW INDEX
 
 export default mongoose.model('Novel', novelSchema);

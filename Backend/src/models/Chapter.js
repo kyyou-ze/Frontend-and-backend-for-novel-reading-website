@@ -28,6 +28,20 @@ const chapterSchema = new mongoose.Schema({
     type: String,
     default: uuidv4
   },
+  
+  // 🔥 APPROVAL SYSTEM
+  approvalStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  approvedAt: Date,
+  rejectionReason: String,
+  
   isPremium: {
     type: Boolean,
     default: false
@@ -54,6 +68,7 @@ const chapterSchema = new mongoose.Schema({
 
 chapterSchema.index({ novel: 1, number: 1 });
 chapterSchema.index({ uuid: 1 });
+chapterSchema.index({ approvalStatus: 1 }); // 🔥 NEW INDEX
 
 chapterSchema.pre('save', function(next) {
   if (this.content) {
