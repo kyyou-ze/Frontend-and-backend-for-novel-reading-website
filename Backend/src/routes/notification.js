@@ -1,19 +1,22 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
+import {
+  getNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  getUnreadCount
+} from '../controllers/notificationController.js';
 
 const router = express.Router();
 
-// This would integrate with a notification service
-router.get('/', protect, async (req, res) => {
-  try {
-    // Placeholder for notification system
-    res.json({
-      success: true,
-      data: []
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Gagal', error: error.message });
-  }
-});
+// Protect all notification routes
+router.use(protect);
+
+router.get('/', getNotifications);
+router.get('/unread-count', getUnreadCount);
+router.put('/:notificationId/read', markAsRead);
+router.put('/mark-all-read', markAllAsRead);
+router.delete('/:notificationId', deleteNotification);
 
 export default router;

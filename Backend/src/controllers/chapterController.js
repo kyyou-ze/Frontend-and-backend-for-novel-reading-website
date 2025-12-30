@@ -1,3 +1,7 @@
+import Novel from '../models/Novel.js';
+import Chapter from '../models/Chapter.js';
+import User from '../models/User.js';
+
 export const createChapter = async (req, res) => {
   try {
     const { novelId, title, content, isPremium, price, schedule } = req.body;
@@ -24,31 +28,41 @@ export const createChapter = async (req, res) => {
       isPremium: isPremium || false,
       price: price || 0,
       schedule: schedule || null,
-      isDraft: !schedule,
-      publishedAt: schedule ? null : new Date()
+      isDraft: !!schedule,
+      publishedAt: schedule ? null : new Date(),
+      approvalStatus: 'pending'
     });
 
-    // Update novel stats
-    novel.totalChapters += 1;
-    novel.totalWords += chapter.wordCount;
-    await novel.save();
+    // Update novel stats only if not draft
+    if (!schedule) {
+      novel.totalChapters += 1;
+      novel.totalWords += chapter.wordCount;
+      await novel.save();
+    }
 
     // Notify subscribers if published
     if (!schedule) {
       const io = req.app.get('io');
-      io.to(`novel_${novelId}`).emit('new_chapter', {
-        novel: novel.title,
-        chapter: chapter.title,
-        number: chapter.number
-      });
+      if (io) {
+        io.to(`novel_${novelId}`).emit('new_chapter', {
+          novel: novel.title,
+          chapter: chapter.title,
+          number: chapter.number
+        });
+      }
     }
 
     res.status(201).json({
       success: true,
+      message: schedule ? 'Chapter dijadwalkan' : 'Chapter menunggu approval',
       data: chapter
     });
   } catch (error) {
-    res.status(500).json({ message: 'Gagal membuat chapter', error: error.message });
+    console.error('Create chapter error:', error);
+    res.status(500).json({ 
+      message: 'Gagal membuat chapter', 
+      error: error.message 
+    });
   }
 };
 
@@ -65,7 +79,8 @@ export const getChapter = async (req, res) => {
 
     const chapter = await Chapter.findOne({ 
       novel: novel._id, 
-      number: parseInt(chapterNum)
+      number: parseInt(chapterNum),
+      approvalStatus: 'approved'
     });
 
     if (!chapter) {
@@ -119,7 +134,11 @@ export const getChapter = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Gagal mengambil chapter', error: error.message });
+    console.error('Get chapter error:', error);
+    res.status(500).json({ 
+      message: 'Gagal mengambil chapter', 
+      error: error.message 
+    });
   }
 };
 
@@ -152,7 +171,11 @@ export const updateChapter = async (req, res) => {
       data: chapter
     });
   } catch (error) {
-    res.status(500).json({ message: 'Gagal update chapter', error: error.message });
+    console.error('Update chapter error:', error);
+    res.status(500).json({ 
+      message: 'Gagal update chapter', 
+      error: error.message 
+    });
   }
 };
 
@@ -174,15 +197,21 @@ export const deleteChapter = async (req, res) => {
 
     // Update novel stats
     const novel = await Novel.findById(chapter.novel._id);
-    novel.totalChapters -= 1;
-    novel.totalWords -= chapter.wordCount;
-    await novel.save();
+    if (novel) {
+      novel.totalChapters = Math.max(0, novel.totalChapters - 1);
+      novel.totalWords = Math.max(0, novel.totalWords - chapter.wordCount);
+      await novel.save();
+    }
 
     res.json({
       success: true,
       message: 'Chapter berhasil dihapus'
     });
   } catch (error) {
-    res.status(500).json({ message: 'Gagal hapus chapter', error: error.message });
+    console.error('Delete chapter error:', error);
+    res.status(500).json({ 
+      message: 'Gagal hapus chapter', 
+      error: error.message 
+    });
   }
 };

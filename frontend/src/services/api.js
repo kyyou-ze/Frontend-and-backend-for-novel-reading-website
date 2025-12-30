@@ -15,14 +15,36 @@ class ApiService {
 
     try {
       const response = await fetch(`${API_URL}${endpoint}`, config);
-      const data = await response.json();
+      
+      // Handle non-JSON responses
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        data = { message: text || 'Server error' };
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Request failed');
+        // Handle specific error codes
+        if (response.status === 401) {
+          // Unauthorized - clear token
+          localStorage.removeItem('token');
+          throw new Error('Sesi berakhir, silakan login kembali');
+        }
+        
+        throw new Error(data.message || `HTTP Error: ${response.status}`);
       }
 
       return data;
     } catch (error) {
+      // Network errors
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        throw new Error('Tidak dapat terhubung ke server. Pastikan backend berjalan di http://localhost:5000');
+      }
+      
       throw error;
     }
   }
@@ -49,6 +71,16 @@ class ApiService {
     return this.request(endpoint, {
       method: 'DELETE'
     });
+  }
+
+  // Test connection
+  async testConnection() {
+    try {
+      const response = await fetch(`${API_URL.replace('/api', '')}/api/health`);
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
   }
 }
 
