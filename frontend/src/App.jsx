@@ -1,4 +1,9 @@
+// ============================================
+// src/App.jsx - Improved with React Router
+// ============================================
+
 import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './styles/global.css';
 
 // Lazy load pages
@@ -14,257 +19,159 @@ const CreateChapterPage = lazy(() => import('./pages/CreateChapterPage'));
 
 // Services
 import { authService } from './services/authService';
+import { api } from './services/api';
+
+// Components
+import Header from './components/Header';
+import Footer from './components/Footer';
+import LoadingScreen from './components/LoadingScreen';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const App = () => {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [pageParams, setPageParams] = useState({});
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [backendStatus, setBackendStatus] = useState('checking');
 
   useEffect(() => {
+    initializeApp();
+  }, []);
+
+  const initializeApp = async () => {
+    // Check backend connection
+    const isConnected = await api.testConnection();
+    setBackendStatus(isConnected ? 'connected' : 'disconnected');
+
+    if (!isConnected) {
+      setLoading(false);
+      return;
+    }
+
     // Load user from localStorage
     const token = localStorage.getItem('token');
     if (token) {
-      authService.getMe().then(data => {
+      try {
+        const data = await authService.getMe();
         setUser(data);
-      }).catch(() => {
+      } catch (error) {
+        console.error('Failed to load user:', error);
         localStorage.removeItem('token');
-      });
+      }
     }
     setLoading(false);
-
-    // Handle browser navigation
-    const handlePopState = () => {
-      const path = window.location.pathname;
-      parsePath(path);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    parsePath(window.location.pathname);
-
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  const parsePath = (path) => {
-    // Remove trailing slash
-    path = path.replace(/\/$/, '') || '/';
-
-    if (path === '/') {
-      setCurrentPage('home');
-      setPageParams({});
-    } else if (path === '/login') {
-      setCurrentPage('login');
-      setPageParams({});
-    } else if (path === '/register') {
-      setCurrentPage('register');
-      setPageParams({});
-    } else if (path === '/dashboard') {
-      setCurrentPage('dashboard');
-      setPageParams({});
-    } else if (path === '/search') {
-      setCurrentPage('search');
-      setPageParams({});
-    } else if (path === '/create-novel') {
-      setCurrentPage('create-novel');
-      setPageParams({});
-    } else if (path.match(/^\/novel\/[^\/]+\/create-chapter$/)) {
-      // Match: /novel/:slug/create-chapter
-      const parts = path.split('/').filter(Boolean);
-      setCurrentPage('create-chapter');
-      setPageParams({ slug: parts[1] });
-    } else if (path.match(/^\/novel\/[^\/]+\/\d+$/)) {
-      // Match: /novel/:slug/:chapterNum
-      const parts = path.split('/').filter(Boolean);
-      setCurrentPage('chapter');
-      setPageParams({ slug: parts[1], chapter: parts[2] });
-    } else if (path.match(/^\/novel\/[^\/]+$/)) {
-      // Match: /novel/:slug
-      const parts = path.split('/').filter(Boolean);
-      setCurrentPage('novel');
-      setPageParams({ slug: parts[1] });
-    } else {
-      // 404 - redirect to home
-      setCurrentPage('home');
-      setPageParams({});
-      window.history.replaceState({}, '', '/');
-    }
-  };
-
-  const navigate = (page, params = {}) => {
-    let path = '/';
-    
-    switch(page) {
-      case 'home':
-        path = '/';
-        break;
-      case 'login':
-        path = '/login';
-        break;
-      case 'register':
-        path = '/register';
-        break;
-      case 'dashboard':
-        path = '/dashboard';
-        break;
-      case 'search':
-        path = '/search';
-        break;
-      case 'create-novel':
-        path = '/create-novel';
-        break;
-      case 'create-chapter':
-        path = `/novel/${params.slug}/create-chapter`;
-        break;
-      case 'novel':
-        path = `/novel/${params.slug}`;
-        break;
-      case 'chapter':
-        path = `/novel/${params.slug}/${params.chapter}`;
-        break;
-      default:
-        path = '/';
-    }
-
-    window.history.pushState({}, '', path);
-    setCurrentPage(page);
-    setPageParams(params);
   };
 
   const handleLogin = (userData) => {
     setUser(userData);
-    navigate('home');
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    authService.logout();
     setUser(null);
-    navigate('home');
   };
 
   if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (backendStatus === 'disconnected') {
     return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
-        <p>Memuat...</p>
+      <div className="error-screen">
+        <div className="error-container">
+          <div style={{ fontSize: '4rem', marginBottom: '24px' }}>⚠️</div>
+          <h1>Backend Tidak Terhubung</h1>
+          <p style={{ marginTop: '12px', marginBottom: '24px', color: 'var(--text-secondary)' }}>
+            Pastikan backend berjalan di http://localhost:5000
+          </p>
+          <div style={{ textAlign: 'left', padding: '20px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', marginBottom: '24px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '8px' }}>Cara menjalankan backend:</p>
+            <code style={{ display: 'block', padding: '8px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem' }}>
+              cd Backend<br/>
+              npm install<br/>
+              npm run dev
+            </code>
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            🔄 Coba Lagi
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="app">
-      <Header user={user} onNavigate={navigate} onLogout={handleLogout} />
-      
-      <main className="main-content">
-        <Suspense fallback={
-          <div className="page-loader">
-            <div className="spinner"></div>
-          </div>
-        }>
-          {currentPage === 'home' && <HomePage onNavigate={navigate} user={user} />}
-          {currentPage === 'login' && <LoginPage onLogin={handleLogin} onNavigate={navigate} />}
-          {currentPage === 'register' && <RegisterPage onNavigate={navigate} />}
-          {currentPage === 'novel' && <NovelDetailPage slug={pageParams.slug} onNavigate={navigate} user={user} />}
-          {currentPage === 'chapter' && <ChapterReadPage slug={pageParams.slug} chapter={pageParams.chapter} onNavigate={navigate} user={user} />}
-          {currentPage === 'dashboard' && user && <DashboardPage user={user} onNavigate={navigate} />}
-          {currentPage === 'search' && <SearchPage onNavigate={navigate} />}
-          {currentPage === 'create-novel' && user?.role === 'author' && <CreateNovelPage onNavigate={navigate} />}
-          {currentPage === 'create-chapter' && user?.role === 'author' && (
-            <CreateChapterPage novelSlug={pageParams.slug} onNavigate={navigate} />
-          )}
-        </Suspense>
-      </main>
-
-      <Footer onNavigate={navigate} />
-    </div>
-  );
-};
-
-const Header = ({ user, onNavigate, onLogout }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <header className="header">
-      <div className="container header-content">
-        <h1 className="logo" onClick={() => onNavigate('home')}>
-          📚 NovelHub
-        </h1>
-        
-        <nav className="nav">
-          <button onClick={() => onNavigate('home')}>Beranda</button>
-          <button onClick={() => onNavigate('search')}>Cari</button>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <div className="app">
+          <Header user={user} onLogout={handleLogout} />
           
-          {user ? (
-            <>
-              <button onClick={() => onNavigate('dashboard')}>Dashboard</button>
-              {user.role === 'author' && (
-                <button 
-                  onClick={() => onNavigate('create-novel')}
-                  className="btn-primary"
-                  style={{ padding: '8px 20px', fontSize: '0.9rem' }}
-                >
-                  ✍️ Buat Novel
-                </button>
-              )}
-              <div className="user-menu">
-                <button className="user-btn" onClick={() => setMenuOpen(!menuOpen)}>
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={user.username} className="avatar-sm" />
-                  ) : (
-                    <div className="avatar-placeholder">{user.username[0].toUpperCase()}</div>
-                  )}
-                  <span>{user.username}</span>
-                </button>
-                {menuOpen && (
-                  <div className="dropdown">
-                    <button onClick={() => { onNavigate('dashboard'); setMenuOpen(false); }}>
-                      👤 Profil
-                    </button>
-                    <button onClick={() => { onLogout(); setMenuOpen(false); }}>
-                      🚪 Keluar
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <button onClick={() => onNavigate('login')} className="btn-primary">
-                Masuk
-              </button>
-            </>
-          )}
-        </nav>
-      </div>
-    </header>
+          <main className="main-content">
+            <Suspense fallback={<LoadingScreen message="Memuat halaman..." />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<HomePage user={user} />} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="/novel/:slug" element={<NovelDetailPage user={user} />} />
+                <Route path="/novel/:slug/:chapterNum" element={<ChapterReadPage user={user} />} />
+                
+                {/* Auth Routes */}
+                <Route 
+                  path="/login" 
+                  element={user ? <Navigate to="/" replace /> : <LoginPage onLogin={handleLogin} />} 
+                />
+                <Route 
+                  path="/register" 
+                  element={user ? <Navigate to="/" replace /> : <RegisterPage />} 
+                />
+                
+                {/* Protected Routes */}
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    user ? <DashboardPage user={user} /> : <Navigate to="/login" replace />
+                  } 
+                />
+                <Route 
+                  path="/create-novel" 
+                  element={
+                    user?.role === 'author' ? <CreateNovelPage /> : <Navigate to="/" replace />
+                  } 
+                />
+                <Route 
+                  path="/novel/:slug/create-chapter" 
+                  element={
+                    user?.role === 'author' ? <CreateChapterPage /> : <Navigate to="/" replace />
+                  } 
+                />
+                
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </main>
+
+          <Footer />
+        </div>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 
-const Footer = ({ onNavigate }) => {
-  return (
-    <footer className="footer">
-      <div className="container">
-        <div className="footer-content">
-          <div className="footer-section">
-            <h3>📚 NovelHub</h3>
-            <p>Platform baca novel digital terbaik di Indonesia</p>
-            <p style={{ fontSize: '0.85rem', marginTop: '12px', color: 'var(--text-muted)' }}>
-              © 2025 NovelHub. All rights reserved.
-            </p>
-          </div>
-          <div className="footer-section">
-            <h4>Navigasi</h4>
-            <button onClick={() => onNavigate('home')}>🏠 Beranda</button>
-            <button onClick={() => onNavigate('search')}>🔍 Cari Novel</button>
-          </div>
-          <div className="footer-section">
-            <h4>Bantuan</h4>
-            <button onClick={() => alert('FAQ belum tersedia')}>❓ FAQ</button>
-            <button onClick={() => alert('Kontak: support@novelhub.com')}>📧 Kontak</button>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-};
+const NotFound = () => (
+  <div className="error-screen">
+    <div className="error-container">
+      <div style={{ fontSize: '6rem', marginBottom: '24px' }}>🔍</div>
+      <h1>404 - Halaman Tidak Ditemukan</h1>
+      <p style={{ marginTop: '12px', marginBottom: '24px', color: 'var(--text-secondary)' }}>
+        Halaman yang Anda cari tidak ada
+      </p>
+      <a href="/" className="btn-primary">
+        Kembali ke Beranda
+      </a>
+    </div>
+  </div>
+);
 
 export default App;

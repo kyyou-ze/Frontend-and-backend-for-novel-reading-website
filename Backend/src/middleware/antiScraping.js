@@ -3,8 +3,8 @@ const requestCounts = new Map();
 export const antiScraping = (req, res, next) => {
   const ip = req.ip;
   const now = Date.now();
-  const timeWindow = 60000; // 1 minute
-  const maxRequests = 60;
+  const timeWindow = 180000; // 1 minute
+  const maxRequests = 180;
 
   if (!requestCounts.has(ip)) {
     requestCounts.set(ip, []);

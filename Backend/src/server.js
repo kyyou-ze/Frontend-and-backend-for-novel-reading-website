@@ -97,11 +97,11 @@ mongoose.connect(MONGODB_URI, {
   socketTimeoutMS: 45000,
 })
 .then(() => {
-  console.log('✅ MongoDB connected successfully');
-  console.log(`📊 Database: ${mongoose.connection.name}`);
+  console.log(' MongoDB connected successfully');
+  console.log(` Database: ${mongoose.connection.name}`);
 })
 .catch(err => {
-  console.error('❌ MongoDB connection error:', err.message);
+  console.error(' MongoDB connection error:', err.message);
   process.exit(1);
 });
 
@@ -111,52 +111,52 @@ mongoose.connection.on('error', err => {
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.warn('⚠️ MongoDB disconnected');
+  console.warn(' MongoDB disconnected');
 });
 
 // Socket.IO connection
 io.on('connection', (socket) => {
-  console.log('👤 User connected:', socket.id);
+  console.log(' User connected:', socket.id);
 
   socket.on('subscribe_novel', (novelId) => {
     socket.join(`novel_${novelId}`);
-    console.log(`📖 User ${socket.id} subscribed to novel ${novelId}`);
+    console.log(` User ${socket.id} subscribed to novel ${novelId}`);
   });
 
   socket.on('subscribe_author', (authorId) => {
     socket.join(`author_${authorId}`);
-    console.log(`✍️ User ${socket.id} subscribed to author ${authorId}`);
+    console.log(` User ${socket.id} subscribed to author ${authorId}`);
   });
 
   socket.on('subscribe_user', (userId) => {
     socket.join(`user_${userId}`);
-    console.log(`👤 User ${socket.id} subscribed to user notifications ${userId}`);
+    console.log(` User ${socket.id} subscribed to user notifications ${userId}`);
   });
 
   socket.on('disconnect', () => {
-    console.log('👋 User disconnected:', socket.id);
+    console.log(' User disconnected:', socket.id);
   });
 });
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log('=================================');
-  console.log('🚀 NovelHub Backend Server');
+  console.log(' NovelHub Backend Server');
   console.log('=================================');
-  console.log(`🌐 Server: http://localhost:${PORT}`);
-  console.log(`📡 API: http://localhost:${PORT}/api`);
-  console.log(`🏥 Health: http://localhost:${PORT}/api/health`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` Server: http://localhost:${PORT}`);
+  console.log(` API: http://localhost:${PORT}/api`);
+  console.log(` Health: http://localhost:${PORT}/api/health`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('=================================');
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('👋 SIGTERM received, closing server...');
+  console.log(' SIGTERM received, closing server...');
   httpServer.close(() => {
-    console.log('✅ Server closed');
+    console.log('Server closed');
     mongoose.connection.close(false, () => {
-      console.log('✅ MongoDB connection closed');
+      console.log('MongoDB connection closed');
       process.exit(0);
     });
   });

@@ -2623,3 +2623,312 @@ button {
   color: var(--success);
   font-weight: 700;
 }
+/* ============================================
+   ADDITIONAL STYLES - Add to end of global.css
+   Error Screens & Improvements
+   ============================================ */
+
+/* ERROR & LOADING SCREENS */
+.error-screen,
+.loading-screen {
+  min-height: calc(100vh - 70px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+.error-container {
+  text-align: center;
+  max-width: 600px;
+  background: white;
+  padding: 60px 40px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  border: 2px solid var(--border);
+}
+
+.error-container h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.loading-screen {
+  background: var(--bg-secondary);
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading-screen p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* IMPROVED SPINNER */
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* LINK STYLES IN NAV */
+.nav a {
+  padding: 10px 20px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  font-size: 0.95rem;
+  font-weight: 500;
+  position: relative;
+}
+
+.nav a::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transform: translateX(-50%);
+  transition: width var(--transition-base);
+}
+
+.nav a:hover {
+  color: var(--primary);
+}
+
+.nav a:hover::before {
+  width: 60%;
+}
+
+.nav a.active {
+  color: var(--primary);
+  background: rgba(102, 126, 234, 0.1);
+}
+
+/* FOOTER LINK STYLES */
+.footer-section a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 8px 0;
+  transition: color var(--transition-fast);
+  font-size: 0.95rem;
+}
+
+.footer-section a:hover {
+  color: var(--primary);
+}
+
+/* IMPROVED NOVEL CARD HOVER */
+.novel-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.novel-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  background: linear-gradient(to top, rgba(102, 126, 234, 0.1), transparent);
+  transition: height var(--transition-base);
+  z-index: 1;
+}
+
+.novel-card:hover::after {
+  height: 100%;
+}
+
+/* SMOOTH PAGE TRANSITIONS */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.home-page,
+.search-page,
+.novel-detail-page,
+.dashboard-page,
+.create-novel-page,
+.create-chapter-page {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* IMPROVED BUTTON STATES */
+.btn-primary:active,
+.btn-secondary:active {
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled:hover,
+.btn-secondary:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* BETTER FOCUS STYLES */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
+}
+
+/* IMPROVED EMPTY STATE */
+.empty-state {
+  padding: 80px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border-radius: var(--radius-xl);
+  border: 2px dashed var(--border-dark);
+  color: var(--text-secondary);
+}
+
+.empty-state p {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* SKELETON LOADING (Optional) */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 0px,
+    var(--bg-secondary) 40px,
+    var(--bg-tertiary) 80px
+  );
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.4s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* IMPROVED DROPDOWN ANIMATION */
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown {
+  animation: dropdownSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top right;
+}
+
+/* BETTER SCROLLBAR */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-dark);
+  border-radius: 6px;
+  border: 2px solid var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* RESPONSIVE NAV */
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: white;
+    border-bottom: 2px solid var(--border);
+    padding: 20px;
+    box-shadow: var(--shadow-lg);
+    flex-direction: column;
+    gap: 12px;
+    z-index: var(--z-dropdown);
+  }
+  
+  .nav.open {
+    display: flex;
+  }
+  
+  .nav a,
+  .nav button {
+    width: 100%;
+    text-align: left;
+    padding: 14px 20px;
+  }
+  
+  .mobile-menu-btn {
+    display: block;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none;
+  }
+}
+
+/* PRINT STYLES */
+@media print {
+  .header,
+  .footer,
+  .reader-header,
+  .btn,
+  button {
+    display: none !important;
+  }
+  
+  .chapter-text {
+    color: #000 !important;
+    background: #fff !important;
+  }
+}

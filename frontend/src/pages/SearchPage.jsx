@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { novelService } from '../services/novelService';
+import NovelCard from '../components/NovelCard';
 
-const SearchPage = ({ onNavigate }) => {
+const SearchPage = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [filters, setFilters] = useState({
@@ -95,34 +96,12 @@ const SearchPage = ({ onNavigate }) => {
             ) : (
               <div className="novel-grid">
                 {results.map(novel => (
-                  <NovelCard key={novel._id} novel={novel} onNavigate={onNavigate} />
+                  <NovelCard key={novel._id} novel={novel} />
                 ))}
               </div>
             )}
           </div>
         )}
-      </div>
-    </div>
-  );
-};
-
-const NovelCard = ({ novel, onNavigate }) => {
-  return (
-    <div className="novel-card" onClick={() => onNavigate('novel', { slug: novel.slug })}>
-      <div className="novel-cover">
-        {novel.cover ? (
-          <img src={novel.cover} alt={novel.title} />
-        ) : (
-          <div className="cover-placeholder">{novel.title[0]}</div>
-        )}
-      </div>
-      <div className="novel-info">
-        <h3 className="novel-title">{novel.title}</h3>
-        <p className="novel-author">{novel.author.username}</p>
-        <div className="novel-meta">
-          <span className="rating">★ {novel.rating.average.toFixed(1)}</span>
-          <span className="chapters">{novel.totalChapters} bab</span>
-        </div>
       </div>
     </div>
   );
