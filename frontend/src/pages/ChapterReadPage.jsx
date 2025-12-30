@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { chapterService } from '../services/chapterService';
 import { commentService } from '../services/commentService';
 
-const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
+const ChapterReadPage = ({ user }) => {
+  const { slug, chapterNum } = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState('light');
@@ -15,11 +18,11 @@ const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
   useEffect(() => {
     loadChapter();
     loadPreferences();
-  }, [slug, chapter]);
+  }, [slug, chapterNum]);
 
   const loadChapter = async () => {
     try {
-      const result = await chapterService.getChapter(slug, chapter);
+      const result = await chapterService.getChapter(slug, chapterNum);
       setData(result.data);
       
       // Save to reading history
@@ -27,7 +30,7 @@ const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
       
       // Load comments
       const commentsData = await commentService.getComments(result.data.chapter._id);
-      setComments(commentsData.data);
+      setComments(commentsData.data || []);
     } catch (error) {
       console.error('Error loading chapter:', error);
     } finally {
@@ -61,14 +64,6 @@ const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
     const filtered = history.filter(h => h.slug !== slug);
     filtered.unshift(newEntry);
     localStorage.setItem('readingHistory', JSON.stringify(filtered.slice(0, 20)));
-
-    // Cache chapter for offline
-    const cache = JSON.parse(localStorage.getItem('chapterCache') || '{}');
-    cache[`${slug}-${chapter}`] = {
-      data: chapterData,
-      cached: Date.now()
-    };
-    localStorage.setItem('chapterCache', JSON.stringify(cache));
   };
 
   const handleThemeToggle = () => {
@@ -102,6 +97,39 @@ const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
     }
   };
 
+  // 🔥 NEW: Like Comment Handler
+  const handleLikeComment = async (commentId) => {
+    if (!user) {
+      alert('Login untuk menyukai komentar');
+      return;
+    }
+
+    try {
+      const result = await commentService.likeComment(commentId);
+      // Update comment in state
+      setComments(comments.map(c => 
+        c._id === commentId ? result.data : c
+      ));
+    } catch (error) {
+      alert('Gagal menyukai komentar');
+    }
+  };
+
+  // 🔥 NEW: Delete Comment Handler
+  const handleDeleteComment = async (commentId) => {
+    if (!confirm('⚠️ Yakin ingin menghapus komentar ini?')) {
+      return;
+    }
+
+    try {
+      await commentService.deleteComment(commentId);
+      setComments(comments.filter(c => c._id !== commentId));
+      alert('✅ Komentar berhasil dihapus');
+    } catch (error) {
+      alert('❌ Gagal menghapus komentar');
+    }
+  };
+
   const handleBookmark = () => {
     const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
     const bookmark = {
@@ -114,57 +142,85 @@ const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
     const filtered = bookmarks.filter(b => b.slug !== slug);
     filtered.unshift(bookmark);
     localStorage.setItem('bookmarks', JSON.stringify(filtered));
-    alert('Bookmark tersimpan!');
+    alert('📖 Bookmark tersimpan!');
   };
 
   if (loading) {
-    return <div className="loader">Memuat chapter...</div>;
+    return (
+      <div className="loader">
+        <div className="spinner"></div>
+        <p>Memuat chapter...</p>
+      </div>
+    );
   }
 
   if (!data) {
-    return <div className="error">Chapter tidak ditemukan</div>;
+    return (
+      <div className="error">
+        <h2>❌ Chapter tidak ditemukan</h2>
+        <button onClick={() => navigate(`/novel/${slug}`)} className="btn-primary">
+          Kembali ke Novel
+        </button>
+      </div>
+    );
   }
 
   const prevChapter = data.chapter.number > 1 ? data.chapter.number - 1 : null;
   const nextChapter = data.chapter.number + 1;
+  const isAuthor = user && user.id === data.novel.author._id;
 
   return (
     <div className={`reader-page theme-${theme}`}>
       <div className="reader-header">
-        <button onClick={() => onNavigate('novel', { slug })} className="back-btn">
-          ← Kembali
-        </button>
-        <h2 className="reader-title">{data.novel.title}</h2>
-        <button onClick={() => setShowSettings(!showSettings)} className="settings-btn">
-          ⚙️
-        </button>
+        <div className="container">
+          <button onClick={() => navigate(`/novel/${slug}`)} className="back-btn">
+            ← Kembali
+          </button>
+          <h2 className="reader-title">{data.novel.title}</h2>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {isAuthor && (
+              <button 
+                onClick={() => navigate(`/novel/${slug}/${chapterNum}/edit`)} 
+                className="settings-btn"
+                style={{ background: '#fbbf24', color: 'white', border: 'none' }}
+              >
+                ✏️ Edit
+              </button>
+            )}
+            <button onClick={() => setShowSettings(!showSettings)} className="settings-btn">
+              ⚙️
+            </button>
+          </div>
+        </div>
       </div>
 
       {showSettings && (
         <div className="reader-settings">
-          <div className="setting-item">
-            <label>Tema</label>
-            <button onClick={handleThemeToggle} className="btn-sm">
-              {theme === 'light' ? '🌙 Gelap' : '☀️ Terang'}
-            </button>
-          </div>
-          <div className="setting-item">
-            <label>Ukuran Font</label>
-            <div className="btn-group">
-              <button onClick={() => handleFontSizeChange(-1)} className="btn-sm">A-</button>
-              <span>{fontSize}px</span>
-              <button onClick={() => handleFontSizeChange(1)} className="btn-sm">A+</button>
+          <div className="container">
+            <div className="setting-item">
+              <label>Tema</label>
+              <button onClick={handleThemeToggle} className="btn-sm">
+                {theme === 'light' ? '🌙 Gelap' : '☀️ Terang'}
+              </button>
             </div>
-          </div>
-          <div className="setting-item">
-            <label>Spasi Baris</label>
-            <div className="btn-group">
-              <button onClick={() => handleLineHeightChange(-0.1)} className="btn-sm">-</button>
-              <span>{lineHeight.toFixed(1)}</span>
-              <button onClick={() => handleLineHeightChange(0.1)} className="btn-sm">+</button>
+            <div className="setting-item">
+              <label>Ukuran Font</label>
+              <div className="btn-group">
+                <button onClick={() => handleFontSizeChange(-1)} className="btn-sm">A-</button>
+                <span>{fontSize}px</span>
+                <button onClick={() => handleFontSizeChange(1)} className="btn-sm">A+</button>
+              </div>
             </div>
+            <div className="setting-item">
+              <label>Spasi Baris</label>
+              <div className="btn-group">
+                <button onClick={() => handleLineHeightChange(-0.1)} className="btn-sm">-</button>
+                <span>{lineHeight.toFixed(1)}</span>
+                <button onClick={() => handleLineHeightChange(0.1)} className="btn-sm">+</button>
+              </div>
+            </div>
+            <button onClick={handleBookmark} className="btn-full">📖 Bookmark</button>
           </div>
-          <button onClick={handleBookmark} className="btn-full">📖 Bookmark</button>
         </div>
       )}
 
@@ -191,20 +247,20 @@ const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
         <div className="chapter-navigation">
           {prevChapter && (
             <button 
-              onClick={() => onNavigate('chapter', { slug, chapter: prevChapter })}
+              onClick={() => navigate(`/novel/${slug}/${prevChapter}`)}
               className="btn-nav"
             >
               ← Bab Sebelumnya
             </button>
           )}
           <button 
-            onClick={() => onNavigate('novel', { slug })}
+            onClick={() => navigate(`/novel/${slug}`)}
             className="btn-nav"
           >
             📚 Daftar Bab
           </button>
           <button 
-            onClick={() => onNavigate('chapter', { slug, chapter: nextChapter })}
+            onClick={() => navigate(`/novel/${slug}/${nextChapter}`)}
             className="btn-nav"
           >
             Bab Selanjutnya →
@@ -213,7 +269,7 @@ const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
       </div>
 
       <div className="comments-section">
-        <h2>Komentar ({comments.length})</h2>
+        <h2>💬 Komentar ({comments.length})</h2>
         
         {user ? (
           <form onSubmit={handleAddComment} className="comment-form">
@@ -227,29 +283,59 @@ const ChapterReadPage = ({ slug, chapter, onNavigate, user }) => {
           </form>
         ) : (
           <p className="comment-login-prompt">
-            <button onClick={() => onNavigate('login')} className="link-btn">
+            <button onClick={() => navigate('/login')} className="link-btn">
               Login
             </button> untuk berkomentar
           </p>
         )}
 
         <div className="comments-list">
-          {comments.map(comment => (
-            <div key={comment._id} className="comment">
-              <div className="comment-header">
-                <strong>{comment.user.username}</strong>
-                <span className="comment-time">
-                  {new Date(comment.createdAt).toLocaleDateString('id-ID')}
-                </span>
+          {comments.map(comment => {
+            const isCommentAuthor = user && user.id === comment.user._id;
+            const hasLiked = user && comment.likedBy?.includes(user.id);
+            
+            return (
+              <div key={comment._id} className="comment">
+                <div className="comment-header">
+                  <strong>{comment.user.username}</strong>
+                  <span className="comment-time">
+                    {new Date(comment.createdAt).toLocaleDateString('id-ID')}
+                  </span>
+                </div>
+                <p className="comment-content">{comment.content}</p>
+                <div className="comment-actions">
+                  <button 
+                    className="comment-like"
+                    onClick={() => handleLikeComment(comment._id)}
+                    style={{ 
+                      color: hasLiked ? '#3b82f6' : 'inherit',
+                      fontWeight: hasLiked ? '700' : '600'
+                    }}
+                  >
+                    {hasLiked ? '👍' : '👍'} {comment.likes}
+                  </button>
+                  
+                  {(isCommentAuthor || user?.role === 'admin') && (
+                    <button 
+                      onClick={() => handleDeleteComment(comment._id)}
+                      style={{
+                        color: '#991b1b',
+                        background: '#fee2e2',
+                        border: '1px solid #fca5a5',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      🗑️ Hapus
+                    </button>
+                  )}
+                </div>
               </div>
-              <p className="comment-content">{comment.content}</p>
-              <div className="comment-actions">
-                <button className="comment-like">
-                  👍 {comment.likes}
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
