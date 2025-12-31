@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
-const RegisterPage = ({ onNavigate }) => {
+const RegisterPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -39,7 +41,7 @@ const RegisterPage = ({ onNavigate }) => {
     try {
       await authService.register(formData);
       setSuccess(true);
-      setTimeout(() => onNavigate('login'), 2000);
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       setError(err.message || 'Registrasi gagal');
     } finally {
@@ -52,7 +54,7 @@ const RegisterPage = ({ onNavigate }) => {
       <div className="auth-page">
         <div className="auth-container">
           <div className="success-message">
-            <h2>Registrasi Berhasil!</h2>
+            <h2>✅ Registrasi Berhasil!</h2>
             <p>Mengalihkan ke halaman login...</p>
           </div>
         </div>
@@ -133,7 +135,7 @@ const RegisterPage = ({ onNavigate }) => {
 
         <p className="auth-link">
           Sudah punya akun?{' '}
-          <button onClick={() => onNavigate('login')} className="link-btn">
+          <button onClick={() => navigate('/login')} className="link-btn">
             Masuk di sini
           </button>
         </p>

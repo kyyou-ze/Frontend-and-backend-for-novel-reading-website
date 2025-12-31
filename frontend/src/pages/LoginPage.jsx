@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
-const LoginPage = ({ onLogin, onNavigate }) => {
+const LoginPage = ({ onLogin }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,6 +17,7 @@ const LoginPage = ({ onLogin, onNavigate }) => {
     try {
       const data = await authService.login(email, password);
       onLogin(data);
+      navigate('/');
     } catch (err) {
       setError(err.message || 'Login gagal');
     } finally {
@@ -59,7 +62,7 @@ const LoginPage = ({ onLogin, onNavigate }) => {
 
         <p className="auth-link">
           Belum punya akun?{' '}
-          <button onClick={() => onNavigate('register')} className="link-btn">
+          <button onClick={() => navigate('/register')} className="link-btn">
             Daftar di sini
           </button>
         </p>

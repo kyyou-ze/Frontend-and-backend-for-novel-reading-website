@@ -1,3 +1,7 @@
+// ============================================
+// FIX: src/services/api.js - CORRECT VERSION
+// ============================================
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 class ApiService {
@@ -16,7 +20,6 @@ class ApiService {
     try {
       const response = await fetch(`${API_URL}${endpoint}`, config);
       
-      // Handle non-JSON responses
       const contentType = response.headers.get('content-type');
       let data;
       
@@ -24,25 +27,43 @@ class ApiService {
         data = await response.json();
       } else {
         const text = await response.text();
-        data = { message: text || 'Server error' };
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { message: text || 'Server error' };
+        }
       }
 
       if (!response.ok) {
-        // Handle specific error codes
         if (response.status === 401) {
-          // Unauthorized - clear token
           localStorage.removeItem('token');
+          window.location.href = '/login';
           throw new Error('Sesi berakhir, silakan login kembali');
         }
         
-        throw new Error(data.message || `HTTP Error: ${response.status}`);
+        if (response.status === 403) {
+          throw new Error('Anda tidak memiliki akses untuk melakukan ini');
+        }
+        
+        if (response.status === 404) {
+          throw new Error('Data tidak ditemukan');
+        }
+        
+        if (response.status === 500) {
+          throw new Error('Terjadi kesalahan server. Silakan coba lagi nanti');
+        }
+        
+        throw new Error(data.message || `Error: ${response.status}`);
       }
 
       return data;
     } catch (error) {
-      // Network errors
       if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-        throw new Error('Tidak dapat terhubung ke server. Pastikan backend berjalan di http://localhost:5000');
+        throw new Error('Tidak dapat terhubung ke server. Pastikan backend berjalan');
+      }
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout. Silakan coba lagi');
       }
       
       throw error;
@@ -73,12 +94,22 @@ class ApiService {
     });
   }
 
-  // Test connection
   async testConnection() {
     try {
-      const response = await fetch(`${API_URL.replace('/api', '')}/api/health`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      
+      // FIX: Remove /api from base URL for health check
+      const healthUrl = `${API_URL.replace('/api', '')}/api/health`;
+      
+      const response = await fetch(healthUrl, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
       return response.ok;
     } catch (error) {
+      console.error('Connection test failed:', error);
       return false;
     }
   }

@@ -1,13 +1,9 @@
-// ============================================
-// src/pages/CreateNovelPage.jsx
-// Beautiful Create Novel Page with Modern Design
-// ============================================
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { novelService } from '../services/novelService';
-// Import: import '../styles/author.css';
 
-const CreateNovelPage = ({ onNavigate }) => {
+const CreateNovelPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     synopsis: '',
@@ -73,7 +69,7 @@ const CreateNovelPage = ({ onNavigate }) => {
       });
 
       alert('✨ Novel berhasil dibuat!');
-      onNavigate('novel', { slug: response.data.slug });
+      navigate(`/novel/${response.data.slug}`);
     } catch (err) {
       setError(err.message || 'Gagal membuat novel');
     } finally {
@@ -85,7 +81,7 @@ const CreateNovelPage = ({ onNavigate }) => {
     <div className="create-novel-page">
       <div className="container">
         <div className="page-header">
-          <button className="back-button" onClick={() => onNavigate('dashboard')}>
+          <button className="back-button" onClick={() => navigate('/dashboard')}>
             ← Kembali ke Dashboard
           </button>
           <h1 className="gradient-text">Buat Novel Baru</h1>
@@ -100,7 +96,6 @@ const CreateNovelPage = ({ onNavigate }) => {
               </div>
             )}
 
-            {/* SECTION 1: INFORMASI DASAR */}
             <div className="form-section">
               <h3>📝 Informasi Dasar</h3>
               
@@ -126,9 +121,7 @@ const CreateNovelPage = ({ onNavigate }) => {
                   name="synopsis"
                   value={formData.synopsis}
                   onChange={handleChange}
-                  placeholder="Ceritakan kisah Anda dengan cara yang membuat pembaca penasaran...
-
-Tips: Mulai dengan hook yang kuat, perkenalkan konflik utama, dan buat pembaca ingin tahu lebih banyak!"
+                  placeholder="Ceritakan kisah Anda dengan cara yang membuat pembaca penasaran..."
                   rows="8"
                   maxLength="2000"
                   required
@@ -139,7 +132,6 @@ Tips: Mulai dengan hook yang kuat, perkenalkan konflik utama, dan buat pembaca i
               </div>
             </div>
 
-            {/* SECTION 2: KATEGORI */}
             <div className="form-section">
               <h3>🏷️ Kategori & Tag</h3>
               
@@ -180,12 +172,11 @@ Tips: Mulai dengan hook yang kuat, perkenalkan konflik utama, dan buat pembaca i
                   placeholder="reinkarnasi, cultivation, op mc, sistem, academy"
                 />
                 <span className="helper-text">
-                  💡 Pisahkan dengan koma. Maksimal 10 tags. Gunakan kata kunci yang sering dicari pembaca.
+                  💡 Pisahkan dengan koma. Maksimal 10 tags.
                 </span>
               </div>
             </div>
 
-            {/* SECTION 3: VISUAL & PENGATURAN */}
             <div className="form-section">
               <h3>🎨 Visual & Pengaturan</h3>
               
@@ -200,7 +191,7 @@ Tips: Mulai dengan hook yang kuat, perkenalkan konflik utama, dan buat pembaca i
                   placeholder="https://example.com/my-cover.jpg"
                 />
                 <span className="helper-text">
-                  📸 Rekomendasi: 300x450px (rasio 2:3) | Format: JPG, PNG | Ukuran: Max 2MB
+                  📸 Rekomendasi: 300x450px (rasio 2:3)
                 </span>
                 
                 {formData.cover && (
@@ -233,9 +224,7 @@ Tips: Mulai dengan hook yang kuat, perkenalkan konflik utama, dan buat pembaca i
                   <div className="checkbox-content">
                     <strong>⚠️ Konten Dewasa (18+)</strong>
                     <p>
-                      Centang jika novel Anda mengandung: kekerasan eksplisit, 
-                      konten seksual, bahasa kasar, atau tema dewasa lainnya. 
-                      Novel akan ditandai khusus dan hanya dapat diakses oleh pengguna 18+.
+                      Centang jika novel Anda mengandung konten dewasa
                     </p>
                   </div>
                 </label>
@@ -246,7 +235,7 @@ Tips: Mulai dengan hook yang kuat, perkenalkan konflik utama, dan buat pembaca i
               <button 
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => onNavigate('dashboard')}
+                onClick={() => navigate('/dashboard')}
                 disabled={loading}
               >
                 ← Batal
@@ -262,49 +251,27 @@ Tips: Mulai dengan hook yang kuat, perkenalkan konflik utama, dan buat pembaca i
             </div>
           </div>
 
-          {/* TIPS SIDEBAR */}
           <div className="tips-sidebar">
             <h3>💡 Tips Sukses</h3>
             
             <div className="tip-card">
               <h4>🎯 Judul Yang Menjual</h4>
               <p>
-                Buat judul yang singkat (3-8 kata), mudah diingat, dan menggambarkan 
-                esensi cerita. Hindari judul yang terlalu panjang atau generik.
+                Buat judul yang singkat, mudah diingat, dan menggambarkan esensi cerita.
               </p>
             </div>
 
             <div className="tip-card">
               <h4>🔥 Sinopsis Kuat</h4>
               <p>
-                Hook pembaca di 2 kalimat pertama! Perkenalkan protagonis, 
-                konflik utama, dan apa yang membuatnya unik. Akhiri dengan pertanyaan 
-                yang membuat penasaran.
+                Hook pembaca di 2 kalimat pertama! Perkenalkan konflik utama.
               </p>
             </div>
 
             <div className="tip-card">
               <h4>🎨 Cover Profesional</h4>
               <p>
-                Cover adalah kesan pertama. Gunakan gambar berkualitas tinggi yang 
-                sesuai tema. Hindari gambar blur atau watermark. Pertimbangkan 
-                hire designer profesional.
-              </p>
-            </div>
-
-            <div className="tip-card">
-              <h4>🏷️ Genre & Tags Tepat</h4>
-              <p>
-                Pilih genre yang benar-benar sesuai. Tag membantu pembaca menemukan 
-                novel Anda. Riset tag populer di genre yang sama untuk maksimalkan exposure.
-              </p>
-            </div>
-
-            <div className="tip-card">
-              <h4>📈 Update Konsisten</h4>
-              <p>
-                Konsistensi adalah kunci! Buat jadwal update reguler dan patuhi. 
-                Pembaca lebih suka novel yang update teratur daripada yang jarang.
+                Cover adalah kesan pertama. Gunakan gambar berkualitas tinggi.
               </p>
             </div>
           </div>

@@ -1,12 +1,7 @@
-// ============================================
-// src/App.jsx - Improved with React Router
-// ============================================
-
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './styles/global.css';
 
-// Lazy load pages
 const HomePage = lazy(() => import('./pages/HomePage'));
 const NovelDetailPage = lazy(() => import('./pages/NovelDetailPage'));
 const ChapterReadPage = lazy(() => import('./pages/ChapterReadPage'));
@@ -16,12 +11,12 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const CreateNovelPage = lazy(() => import('./pages/CreateNovelPage'));
 const CreateChapterPage = lazy(() => import('./pages/CreateChapterPage'));
+const EditNovelPage = lazy(() => import('./pages/EditNovelPage'));
+const EditChapterPage = lazy(() => import('./pages/EditChapterPage'));
 
-// Services
 import { authService } from './services/authService';
 import { api } from './services/api';
 
-// Components
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
@@ -37,7 +32,6 @@ const App = () => {
   }, []);
 
   const initializeApp = async () => {
-    // Check backend connection
     const isConnected = await api.testConnection();
     setBackendStatus(isConnected ? 'connected' : 'disconnected');
 
@@ -46,7 +40,6 @@ const App = () => {
       return;
     }
 
-    // Load user from localStorage
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -85,7 +78,7 @@ const App = () => {
           <div style={{ textAlign: 'left', padding: '20px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', marginBottom: '24px' }}>
             <p style={{ fontWeight: '700', marginBottom: '8px' }}>Cara menjalankan backend:</p>
             <code style={{ display: 'block', padding: '8px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem' }}>
-              cd Backend<br/>
+              cd backend<br/>
               npm install<br/>
               npm run dev
             </code>
@@ -110,13 +103,11 @@ const App = () => {
           <main className="main-content">
             <Suspense fallback={<LoadingScreen message="Memuat halaman..." />}>
               <Routes>
-                {/* Public Routes */}
                 <Route path="/" element={<HomePage user={user} />} />
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/novel/:slug" element={<NovelDetailPage user={user} />} />
                 <Route path="/novel/:slug/:chapterNum" element={<ChapterReadPage user={user} />} />
                 
-                {/* Auth Routes */}
                 <Route 
                   path="/login" 
                   element={user ? <Navigate to="/" replace /> : <LoginPage onLogin={handleLogin} />} 
@@ -126,13 +117,13 @@ const App = () => {
                   element={user ? <Navigate to="/" replace /> : <RegisterPage />} 
                 />
                 
-                {/* Protected Routes */}
                 <Route 
                   path="/dashboard" 
                   element={
                     user ? <DashboardPage user={user} /> : <Navigate to="/login" replace />
                   } 
                 />
+                
                 <Route 
                   path="/create-novel" 
                   element={
@@ -145,8 +136,19 @@ const App = () => {
                     user?.role === 'author' ? <CreateChapterPage /> : <Navigate to="/" replace />
                   } 
                 />
+                <Route 
+                  path="/novel/:slug/edit" 
+                  element={
+                    user?.role === 'author' ? <EditNovelPage /> : <Navigate to="/" replace />
+                  } 
+                />
+                <Route 
+                  path="/novel/:slug/:chapterNum/edit" 
+                  element={
+                    user?.role === 'author' ? <EditChapterPage /> : <Navigate to="/" replace />
+                  } 
+                />
                 
-                {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

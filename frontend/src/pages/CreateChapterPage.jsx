@@ -1,14 +1,12 @@
-// ============================================
-// src/pages/CreateChapterPage.jsx
-// Beautiful Create Chapter Page with Modern Editor
-// ============================================
-
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { chapterService } from '../services/chapterService';
 import { novelService } from '../services/novelService';
-// Import: import '../styles/author.css';
 
-const CreateChapterPage = ({ novelSlug, onNavigate }) => {
+const CreateChapterPage = () => {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  
   const [novel, setNovel] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -28,7 +26,7 @@ const CreateChapterPage = ({ novelSlug, onNavigate }) => {
   useEffect(() => {
     loadNovel();
     loadDraft();
-  }, [novelSlug]);
+  }, [slug]);
 
   useEffect(() => {
     const words = formData.content.trim().split(/\s+/).filter(Boolean).length;
@@ -53,7 +51,7 @@ const CreateChapterPage = ({ novelSlug, onNavigate }) => {
 
   const loadNovel = async () => {
     try {
-      const response = await novelService.getNovelBySlug(novelSlug);
+      const response = await novelService.getNovelBySlug(slug);
       setNovel(response.data);
     } catch (error) {
       setError('Gagal memuat novel');
@@ -61,7 +59,7 @@ const CreateChapterPage = ({ novelSlug, onNavigate }) => {
   };
 
   const loadDraft = () => {
-    const draft = localStorage.getItem(`draft_${novelSlug}`);
+    const draft = localStorage.getItem(`draft_${slug}`);
     if (draft) {
       const parsed = JSON.parse(draft);
       setFormData(parsed);
@@ -75,7 +73,7 @@ const CreateChapterPage = ({ novelSlug, onNavigate }) => {
       ...formData,
       savedAt: new Date().toISOString()
     };
-    localStorage.setItem(`draft_${novelSlug}`, JSON.stringify(draft));
+    localStorage.setItem(`draft_${slug}`, JSON.stringify(draft));
     setLastSaved(new Date());
     setTimeout(() => setSaving(false), 500);
   };
@@ -115,10 +113,10 @@ const CreateChapterPage = ({ novelSlug, onNavigate }) => {
       };
 
       await chapterService.createChapter(chapterData);
-      localStorage.removeItem(`draft_${novelSlug}`);
+      localStorage.removeItem(`draft_${slug}`);
 
       alert(publishNow ? '✅ Bab berhasil dipublish!' : '💾 Bab berhasil disimpan!');
-      onNavigate('novel', { slug: novelSlug });
+      navigate(`/novel/${slug}`);
     } catch (err) {
       setError(err.message || 'Gagal menyimpan bab');
     } finally {
@@ -141,14 +139,13 @@ const CreateChapterPage = ({ novelSlug, onNavigate }) => {
 
   return (
     <div className="create-chapter-page">
-      {/* EDITOR HEADER */}
       <div className="editor-header">
         <div className="container">
           <div className="header-content">
             <div className="header-left">
               <button 
                 className="back-btn" 
-                onClick={() => onNavigate('novel', { slug: novelSlug })}
+                onClick={() => navigate(`/novel/${slug}`)}
               >
                 ← Kembali
               </button>
@@ -183,9 +180,7 @@ const CreateChapterPage = ({ novelSlug, onNavigate }) => {
         </div>
       </div>
 
-      {/* EDITOR CONTAINER */}
       <div className="editor-container">
-        {/* MAIN EDITOR */}
         <div className="editor-main">
           {error && (
             <div className="alert alert-error">
@@ -211,17 +206,7 @@ const CreateChapterPage = ({ novelSlug, onNavigate }) => {
               name="content"
               value={formData.content}
               onChange={handleChange}
-              placeholder="Mulai menulis cerita Anda di sini...
-
-Tips Menulis:
-• Mulai dengan hook yang menarik untuk mempertahankan perhatian pembaca
-• Gunakan dialog natural untuk menghidupkan karakter
-• Buat deskripsi yang vivid namun tidak berlebihan
-• Variasikan panjang paragraf dan kalimat
-• Akhiri dengan cliffhanger untuk bab selanjutnya
-• Proofread sebelum publish!
-
-Selamat menulis! ✍️"
+              placeholder="Mulai menulis cerita Anda di sini..."
               className="chapter-editor"
             />
             
@@ -242,9 +227,7 @@ Selamat menulis! ✍️"
           </div>
         </div>
 
-        {/* SIDEBAR */}
         <div className="editor-sidebar">
-          {/* SETTINGS */}
           <div className="sidebar-section">
             <h3>⚙️ Pengaturan Bab</h3>
 
@@ -290,7 +273,6 @@ Selamat menulis! ✍️"
             </div>
           </div>
 
-          {/* STATISTICS */}
           <div className="sidebar-section">
             <h3>📊 Statistik Novel</h3>
             <div className="stat-item">
@@ -305,58 +287,16 @@ Selamat menulis! ✍️"
               <span className="stat-label">Rating</span>
               <span className="stat-value">★ {novel.rating.average.toFixed(1)}</span>
             </div>
-            <div className="stat-item">
-              <span className="stat-label">Status</span>
-              <span className="stat-value" style={{ 
-                color: novel.status === 'ongoing' ? '#10b981' : '#64748b' 
-              }}>
-                {novel.status === 'ongoing' ? 'Ongoing' : 'Completed'}
-              </span>
-            </div>
           </div>
 
-          {/* WRITING TIPS */}
           <div className="sidebar-section">
             <h3>💡 Tips Menulis</h3>
             <ul className="tips-list">
-              <li>Buat hook menarik di awal untuk grab attention</li>
-              <li>Show, don't tell - Gunakan aksi & dialog</li>
-              <li>Variasikan panjang kalimat untuk ritme</li>
-              <li>Develop karakter dengan dialog natural</li>
-              <li>End with cliffhanger untuk next chapter</li>
-              <li>Edit & proofread sebelum publish</li>
+              <li>Buat hook menarik di awal</li>
+              <li>Show, don't tell</li>
+              <li>Variasikan panjang kalimat</li>
+              <li>End with cliffhanger</li>
             </ul>
-          </div>
-
-          {/* QUICK ACTIONS */}
-          <div className="sidebar-section">
-            <h3>⚡ Quick Actions</h3>
-            <button 
-              onClick={() => saveDraft()}
-              className="btn btn-secondary"
-              style={{ width: '100%', marginBottom: '12px' }}
-            >
-              💾 Save Draft
-            </button>
-            <button 
-              onClick={() => {
-                if (confirm('Yakin ingin clear draft?')) {
-                  setFormData({
-                    title: '',
-                    content: '',
-                    isPremium: false,
-                    price: 0,
-                    schedule: '',
-                    isDraft: true
-                  });
-                  localStorage.removeItem(`draft_${novelSlug}`);
-                }
-              }}
-              className="btn btn-secondary"
-              style={{ width: '100%' }}
-            >
-              🗑️ Clear All
-            </button>
           </div>
         </div>
       </div>

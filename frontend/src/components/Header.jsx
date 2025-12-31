@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const Header = ({ user, onLogout }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -12,18 +13,27 @@ const Header = ({ user, onLogout }) => {
           📚 NovelHub
         </Link>
         
-        <nav className="nav">
-          <Link to="/">Beranda</Link>
-          <Link to="/search">Cari</Link>
+        <button 
+          className="mobile-menu-btn"
+          onClick={() => setMobileNavOpen(!mobileNavOpen)}
+          aria-label="Toggle menu"
+        >
+          {mobileNavOpen ? '✕' : '☰'}
+        </button>
+
+        <nav className={`nav ${mobileNavOpen ? 'open' : ''}`}>
+          <Link to="/" onClick={() => setMobileNavOpen(false)}>Beranda</Link>
+          <Link to="/search" onClick={() => setMobileNavOpen(false)}>Cari</Link>
           
           {user ? (
             <>
-              <Link to="/dashboard">Dashboard</Link>
+              <Link to="/dashboard" onClick={() => setMobileNavOpen(false)}>Dashboard</Link>
               {user.role === 'author' && (
                 <Link 
                   to="/create-novel"
                   className="btn-primary"
                   style={{ padding: '8px 20px', fontSize: '0.9rem' }}
+                  onClick={() => setMobileNavOpen(false)}
                 >
                   ✍️ Buat Novel
                 </Link>
@@ -39,10 +49,18 @@ const Header = ({ user, onLogout }) => {
                 </button>
                 {menuOpen && (
                   <div className="dropdown">
-                    <button onClick={() => { navigate('/dashboard'); setMenuOpen(false); }}>
+                    <button onClick={() => { 
+                      navigate('/dashboard'); 
+                      setMenuOpen(false);
+                      setMobileNavOpen(false);
+                    }}>
                       👤 Profil
                     </button>
-                    <button onClick={() => { onLogout(); setMenuOpen(false); }}>
+                    <button onClick={() => { 
+                      onLogout(); 
+                      setMenuOpen(false);
+                      setMobileNavOpen(false);
+                    }}>
                       🚪 Keluar
                     </button>
                   </div>
@@ -50,7 +68,11 @@ const Header = ({ user, onLogout }) => {
               </div>
             </>
           ) : (
-            <Link to="/login" className="btn-primary">
+            <Link 
+              to="/login" 
+              className="btn-primary"
+              onClick={() => setMobileNavOpen(false)}
+            >
               Masuk
             </Link>
           )}
