@@ -38,6 +38,11 @@ const Header = ({ user, onLogout }) => {
                   ✍️ Buat Novel
                 </Link>
               )}
+              {user?.role === 'admin' && (
+  <Link to="/admin" onClick={() => setMobileNavOpen(false)}>
+    🛡️ Admin
+  </Link>
+)}
               <div className="user-menu">
                 <button className="user-btn" onClick={() => setMenuOpen(!menuOpen)}>
                   {user.avatar ? (

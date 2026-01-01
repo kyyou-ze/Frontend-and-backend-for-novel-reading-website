@@ -13,6 +13,7 @@ const CreateNovelPage = lazy(() => import('./pages/CreateNovelPage'));
 const CreateChapterPage = lazy(() => import('./pages/CreateChapterPage'));
 const EditNovelPage = lazy(() => import('./pages/EditNovelPage'));
 const EditChapterPage = lazy(() => import('./pages/EditChapterPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 
 import { authService } from './services/authService';
 import { api } from './services/api';
@@ -148,6 +149,12 @@ const App = () => {
                     user?.role === 'author' ? <EditChapterPage /> : <Navigate to="/" replace />
                   } 
                 />
+                <Route 
+  path="/admin" 
+  element={
+    user?.role === 'admin' ? <AdminDashboardPage user={user} /> : <Navigate to="/" replace />
+  } 
+/>
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
